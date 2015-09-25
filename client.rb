@@ -2,39 +2,61 @@ require 'rest_client'
 require 'open-uri'
 require 'base64'
 
+BASE_URL = "https://api.twitter.com/1.1"
+
 class TwitterClient
-  def self.bearer_token(consumer_key, consumer_secret)
-    consumer_key = URI::encode(consumer_key)
-    consumer_secret = URI::encode(consumer_secret)
-    Base64.strict_encode64(consumer_key + ':' + consumer_secret)
+  attr_accessor :consumer_key
+  attr_accessor :consumer_secret
+
+  def self.bearer_token(ck, cs)
+    ck = URI::encode(ck)
+    cs = URI::encode(cs)
+    Base64.strict_encode64(ck + ':' + cs)
   end
 
-  def self.test_auth(consumer_key, consumer_secret)
-    begin
-      bearer_token = TwitterClient.bearer_token(consumer_key, consumer_secret)
-      resp = RestClient::Request.execute({
-        method: :post,
-        url: 'https://api.twitter.com/oauth2/token',
-        headers: {
-          'User-Agent' => 'My twitter App',
-          'Authorization' => "Basic #{bearer_token}",
-          'Content-Type' => 'application/x-www-form-urlencoded;charset=UTF-8',
-          'Content-Length' => 29,
-          'Accept-Encoding' => 'gzip',
-        },
-        payload: 'grant_type=client_credentials',
-      })
-    rescue => e
-      return false
-    end
-    true
+  def self.access_token(ck, cs)
+    bearer_token = TwitterClient.bearer_token(ck, cs)
+    resp = RestClient::Request.execute({
+      method: :post,
+      url: 'https://api.twitter.com/oauth2/token',
+      headers: {
+        'User-Agent' => 'My twitter App',
+        'Authorization' => "Basic #{bearer_token}",
+        'Content-Type' => 'application/x-www-form-urlencoded;charset=UTF-8',
+        'Content-Length' => 29,
+        'Accept-Encoding' => 'gzip',
+      },
+      payload: 'grant_type=client_credentials',
+    })
+    JSON.parse(resp)['access_token']
+  end
+
+  def follower_ids(user_id, count = 5000)
+    access_token = TwitterClient.access_token(consumer_key, consumer_secret)
+    url = "#{BASE_URL}/followers/ids.json?count=#{count}&user_id=#{user_id}"
+    resp = RestClient::Request.execute({
+      method: :get,
+      url: url,
+      headers: {
+        'User-Agent'      => 'My Twitter App',
+        'Authorization'   => "Bearer #{access_token}",
+        'Accept-Encoding' =>  'gzip',
+      }
+    })
+   JSON.parse(resp)['ids']
+  end
+
+  def initialize(ck, cs)
+    @consumer_key = ck
+    @consumer_secret = cs
   end
 end
 
-c = JSON.parse(ARGV[0])
-tokens = c['tokens'].split(/\s+/)
-if TwitterClient.test_auth(tokens[0], tokens[1])
-  puts "OK"
-else
-  puts "FAIL"
+ck = ENV['CONSUMER_KEY']
+cs = ENV['CONSUMER_SECRET']
+client = TwitterClient.new(ck, cs)
+
+# Retrieve the first 5000 follower IDs of @SGgrc
+client.follower_ids(140162079).each do |id|
+  puts id
 end
