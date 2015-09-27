@@ -16,6 +16,7 @@ class TwitterClient
 
   def self.access_token(ck, cs)
     bearer_token = TwitterClient.bearer_token(ck, cs)
+    begin
     resp = RestClient::Request.execute({
       method: :post,
       url: 'https://api.twitter.com/oauth2/token',
@@ -29,6 +30,17 @@ class TwitterClient
       payload: 'grant_type=client_credentials',
     })
     JSON.parse(resp)['access_token']
+    rescue => e
+      if e.http_code == 403
+        raise AuthenticationError
+      else
+        raise e
+      end
+    end
+  end
+
+  def self.test_access(ck, cs)
+    return !self.access_token(ck, cs).empty?
   end
 
   def follower_ids(user_id, count = 5000)
@@ -52,11 +64,11 @@ class TwitterClient
   end
 end
 
-ck = ENV['CONSUMER_KEY']
-cs = ENV['CONSUMER_SECRET']
-client = TwitterClient.new(ck, cs)
+#ck = ENV['CONSUMER_KEY']
+#cs = ENV['CONSUMER_SECRET']
+#client = TwitterClient.new(ck, cs)
 
 # Retrieve the first 5000 follower IDs of @SGgrc
-client.follower_ids(140162079).each do |id|
-  puts id
-end
+#client.follower_ids(140162079).each do |id|
+#  puts id
+#end
