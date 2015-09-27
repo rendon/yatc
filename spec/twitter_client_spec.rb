@@ -27,11 +27,26 @@ RSpec.describe TwitterClient do
   end
 
   describe '#follower_ids' do
-    it 'should return many ids' do
-      client = TwitterClient.new(ck, cs)
-      count = Settings::MAX_FOLLOWER_IDS
+    let(:client) { TwitterClient.new(ck, cs)  }
+    let(:count)  { Settings::MAX_FOLLOWER_IDS }
+    it 'should accept user ID' do
       # TwitterDev has many followers!
       expect(client.follower_ids(2244994945).length).to eq count
+    end
+
+    it 'should accept user name' do
+      expect(client.follower_ids('TwitterDev').length).to eq count
+    end
+  end
+
+  describe '#users_show' do
+    let(:client) { TwitterClient.new(ck, cs)  }
+    it 'should accept user ID' do
+      expect(client.users_show(2244994945)['id_str']).to eq '2244994945'
+    end
+
+    it 'should accept user name' do
+      expect(client.users_show('TwitterDev')['id_str']).to eq '2244994945'
     end
   end
 end

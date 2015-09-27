@@ -40,11 +40,46 @@ class TwitterClient
     !access_token(ck, cs).empty?
   end
 
-  def follower_ids(user_id, count = 5000)
+  def follower_ids(user, count = 5000)
+    params = { count: count }
+    if user.class == Fixnum
+      params[:user_id] = user
+    else
+      params[:screen_name] = user
+    end
+    params = encode_params(params)
+    url = "#{BASE_URL}/followers/ids.json?#{params}"
     access_token = TwitterClient.access_token(consumer_key, consumer_secret)
-    url = "#{BASE_URL}/followers/ids.json?count=#{count}&user_id=#{user_id}"
-    resp = RestClient::Request.execute(
-      method: :get,
+    JSON.parse(execute(:get, url, access_token))['ids']
+  end
+
+  def users_show(user)
+    params = {}
+    if user.class == Fixnum
+      params[:user_id] = user
+    else
+      params[:screen_name] = user
+    end
+    params = encode_params(params)
+    url = "#{BASE_URL}/users/show.json?#{params}"
+    access_token = TwitterClient.access_token(consumer_key, consumer_secret)
+    JSON.parse(execute(:get, url, access_token))
+  end
+
+  def initialize(ck, cs)
+    @consumer_key = ck
+    @consumer_secret = cs
+  end
+
+  private
+
+  def encode_params(params)
+    params.map { |k, v| "#{k}=#{v}" }.join('&')
+  end
+
+  def execute(method, url, access_token)
+    RestClient::Request.execute(
+      method: method,
       url: url,
       headers: {
         'User-Agent'      => 'My Twitter App',
@@ -52,11 +87,5 @@ class TwitterClient
         'Accept-Encoding' =>  'gzip'
       }
     )
-    JSON.parse(resp)['ids']
-  end
-
-  def initialize(ck, cs)
-    @consumer_key = ck
-    @consumer_secret = cs
   end
 end
