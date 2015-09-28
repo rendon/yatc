@@ -109,6 +109,33 @@ class TwitterClient
     JSON.parse(execute(:get, url, access_token))
   end
 
+  def statuses_user_timeline(user, count = 200)
+    params = {}
+    if user.class == Fixnum
+      params[:user_id] = user
+    else
+      params[:screen_name] = user
+    end
+    tweets = []
+    max_id = nil
+    while count > 0
+      params[:count] = [Settings::MAX_TWEETS, count].min
+      count -= params[:count]
+      unless max_id.nil?
+        params[:max_id] = max_id
+      end
+      encoded_params = encode_params(params)
+      url = "#{BASE_URL}/statuses/user_timeline.json?#{encoded_params}"
+      access_token = TwitterClient.access_token(consumer_key, consumer_secret)
+      t = JSON.parse(execute(:get, url, access_token))
+      unless t.empty?
+        max_id = t.map{ |tweet| tweet['id'] }.min - 1
+      end
+      tweets += t
+    end
+    tweets
+  end
+
   def initialize(ck, cs)
     @consumer_key = ck
     @consumer_secret = cs

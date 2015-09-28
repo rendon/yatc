@@ -69,4 +69,20 @@ RSpec.describe TwitterClient do
       expect(client.users_show('TwitterDev')['id_str']).to eq '2244994945'
     end
   end
+
+  describe '#statuses_user_timeline' do
+    let(:count) { Settings::MAX_TWEETS }
+    let(:client) { TwitterClient.new(ck, cs)  }
+    it 'should accept user ID' do
+      expect(client.statuses_user_timeline(2244994945).length).to eq count
+    end
+
+    it 'should accept user name' do
+      expect(client.statuses_user_timeline('TwitterDev').length).to eq count
+    end
+
+    it 'should retrieve X tweets' do
+      expect(client.statuses_user_timeline('TwitterDev', 211).length).to eq 211
+    end
+  end
 end
