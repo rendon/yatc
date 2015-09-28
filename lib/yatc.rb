@@ -70,6 +70,32 @@ class TwitterClient
     ids
   end
 
+  def friends_ids(user, count = 5000)
+    params = {}
+    if user.class == Fixnum
+      params[:user_id] = user
+    else
+      params[:screen_name] = user
+    end
+    ids = []
+    cursor = nil
+    access_token = TwitterClient.access_token(consumer_key, consumer_secret)
+    while count > 0
+      params[:count] = [Settings::MAX_FOLLOWER_IDS, count].min
+      count -= params[:count]
+      unless cursor.nil?
+        params[:cursor] = cursor
+      end
+
+      encoded_params = encode_params(params)
+      url = "#{BASE_URL}/friends/ids.json?#{encoded_params}"
+      data = JSON.parse(execute(:get, url, access_token))
+      ids += data['ids']
+      cursor = data['next_cursor']
+    end
+    ids
+  end
+
   def users_show(user)
     params = {}
     if user.class == Fixnum
