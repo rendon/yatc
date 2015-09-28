@@ -3,6 +3,7 @@ require 'open-uri'
 require 'base64'
 
 require_relative 'settings'
+require_relative 'exceptions'
 
 BASE_URL = 'https://api.twitter.com/1.1'
 
@@ -10,6 +11,7 @@ BASE_URL = 'https://api.twitter.com/1.1'
 class TwitterClient
   attr_accessor :consumer_key
   attr_accessor :consumer_secret
+  attr_accessor :should_wait
 
   def self.bearer_token(ck, cs)
     ck = URI.encode(ck)
@@ -93,14 +95,27 @@ class TwitterClient
   end
 
   def execute(method, url, access_token)
-    RestClient::Request.execute(
-      method: method,
-      url: url,
-      headers: {
-        'User-Agent'      => 'My Twitter App',
-        'Authorization'   => "Bearer #{access_token}",
-        'Accept-Encoding' =>  'gzip'
-      }
-    )
+    tries = 0
+    begin
+      RestClient::Request.execute(
+        method: method,
+        url: url,
+        headers: {
+          'User-Agent'      => 'My Twitter App',
+          'Authorization'   => "Bearer #{access_token}",
+          'Accept-Encoding' =>  'gzip'
+        }
+      )
+    rescue RestClient::TooManyRequests => e
+      headers = e.response.headers
+      if should_wait && headers[:x_rate_limit_reset] && tries == 0
+        tries += 1
+        delta = (Time.at(headers[:x_rate_limit_reset].to_i) - Time.now).to_i
+        sleep(delta + 1)
+        retry
+      else
+        raise RateLimitExceeded.new(e.message)
+      end
+    end
   end
 end
