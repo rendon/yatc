@@ -1,3 +1,3 @@
-require 'twitter_client'
+require 'yatc'
 require 'exceptions'
 require 'settings'
