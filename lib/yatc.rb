@@ -2,6 +2,8 @@ require 'rest_client'
 require 'open-uri'
 require 'base64'
 
+require_relative 'settings'
+
 BASE_URL = 'https://api.twitter.com/1.1'
 
 # This is the Twitter client class that will allow you to query the Twitter API.
@@ -41,16 +43,29 @@ class TwitterClient
   end
 
   def follower_ids(user, count = 5000)
-    params = { count: count }
+    params = {}
     if user.class == Fixnum
       params[:user_id] = user
     else
       params[:screen_name] = user
     end
-    params = encode_params(params)
-    url = "#{BASE_URL}/followers/ids.json?#{params}"
+    ids = []
+    cursor = nil
     access_token = TwitterClient.access_token(consumer_key, consumer_secret)
-    JSON.parse(execute(:get, url, access_token))['ids']
+    while count > 0
+      params[:count] = [Settings::MAX_FOLLOWER_IDS, count].min
+      count -= params[:count]
+      unless cursor.nil?
+        params[:cursor] = cursor
+      end
+
+      encoded_params = encode_params(params)
+      url = "#{BASE_URL}/followers/ids.json?#{encoded_params}"
+      data = JSON.parse(execute(:get, url, access_token))
+      ids += data['ids']
+      cursor = data['next_cursor']
+    end
+    ids
   end
 
   def users_show(user)
