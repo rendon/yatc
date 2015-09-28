@@ -44,7 +44,7 @@ class TwitterClient
     !access_token(ck, cs).empty?
   end
 
-  def follower_ids(user, count = 5000)
+  def followers_ids(user, count = 5000)
     params = {}
     if user.class == Fixnum
       params[:user_id] = user
