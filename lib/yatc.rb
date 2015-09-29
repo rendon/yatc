@@ -55,7 +55,7 @@ class TwitterClient
     cursor = nil
     access_token = TwitterClient.access_token(consumer_key, consumer_secret)
     while count > 0
-      params[:count] = [Settings::MAX_FOLLOWER_IDS, count].min
+      params[:count] = [Yatc::Settings::MAX_FOLLOWER_IDS, count].min
       count -= params[:count]
       unless cursor.nil?
         params[:cursor] = cursor
@@ -81,7 +81,7 @@ class TwitterClient
     cursor = nil
     access_token = TwitterClient.access_token(consumer_key, consumer_secret)
     while count > 0
-      params[:count] = [Settings::MAX_FOLLOWER_IDS, count].min
+      params[:count] = [Yatc::Settings::MAX_FOLLOWER_IDS, count].min
       count -= params[:count]
       unless cursor.nil?
         params[:cursor] = cursor
@@ -119,7 +119,7 @@ class TwitterClient
     tweets = []
     max_id = nil
     while count > 0
-      params[:count] = [Settings::MAX_TWEETS, count].min
+      params[:count] = [Yatc::Settings::MAX_TWEETS, count].min
       count -= params[:count]
       unless max_id.nil?
         params[:max_id] = max_id

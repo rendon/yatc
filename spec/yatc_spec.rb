@@ -28,7 +28,7 @@ RSpec.describe TwitterClient do
 
   describe '#followers_ids' do
     let(:client) { TwitterClient.new(ck, cs)  }
-    let(:count)  { Settings::MAX_FOLLOWER_IDS }
+    let(:count)  { Yatc::Settings::MAX_FOLLOWER_IDS }
     it 'should accept user ID' do
       # TwitterDev has many followers!
       expect(client.followers_ids(2244994945).length).to eq count
@@ -45,7 +45,7 @@ RSpec.describe TwitterClient do
 
   describe '#friends_ids' do
     let(:client) { TwitterClient.new(ck, cs)  }
-    let(:count)  { Settings::MAX_FOLLOWER_IDS }
+    let(:count)  { Yatc::Settings::MAX_FOLLOWER_IDS }
     it 'should accept user ID' do
       expect(client.friends_ids(15514266).length).to eq count
     end
@@ -71,7 +71,7 @@ RSpec.describe TwitterClient do
   end
 
   describe '#statuses_user_timeline' do
-    let(:count) { Settings::MAX_TWEETS }
+    let(:count) { Yatc::Settings::MAX_TWEETS }
     let(:client) { TwitterClient.new(ck, cs)  }
     it 'should accept user ID' do
       expect(client.statuses_user_timeline(2244994945).length).to eq count
