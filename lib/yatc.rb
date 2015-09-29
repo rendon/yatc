@@ -12,36 +12,10 @@ class TwitterClient
   attr_accessor :consumer_key
   attr_accessor :consumer_secret
   attr_accessor :should_wait
+  attr_accessor :access_token
 
-  def self.bearer_token(ck, cs)
-    ck = URI.encode(ck)
-    cs = URI.encode(cs)
-    Base64.strict_encode64(ck + ':' + cs)
-  end
-
-  def self.access_token(ck, cs)
-    bearer_token = TwitterClient.bearer_token(ck, cs)
-    begin
-      resp = RestClient::Request.execute(
-        method: :post,
-        url: 'https://api.twitter.com/oauth2/token',
-        headers: {
-          'User-Agent' => 'My twitter App',
-          'Authorization' => "Basic #{bearer_token}",
-          'Content-Type' => 'application/x-www-form-urlencoded;charset=UTF-8',
-          'Content-Length' => 29,
-          'Accept-Encoding' => 'gzip'
-        },
-        payload: 'grant_type=client_credentials'
-      )
-      JSON.parse(resp)['access_token']
-    rescue => e
-      raise e.http_code == 403 ? AuthenticationError : e
-    end
-  end
-
-  def self.test_access(ck, cs)
-    !access_token(ck, cs).empty?
+  def test_access(ck, cs)
+    !request_access_token(ck, cs).empty?
   end
 
   def followers_ids(user, count = 5000)
@@ -53,7 +27,6 @@ class TwitterClient
     end
     ids = []
     cursor = nil
-    access_token = TwitterClient.access_token(consumer_key, consumer_secret)
     while count > 0
       params[:count] = [Yatc::Settings::MAX_FOLLOWER_IDS, count].min
       count -= params[:count]
@@ -79,7 +52,6 @@ class TwitterClient
     end
     ids = []
     cursor = nil
-    access_token = TwitterClient.access_token(consumer_key, consumer_secret)
     while count > 0
       params[:count] = [Yatc::Settings::MAX_FOLLOWER_IDS, count].min
       count -= params[:count]
@@ -105,7 +77,6 @@ class TwitterClient
     end
     params = encode_params(params)
     url = "#{BASE_URL}/users/show.json?#{params}"
-    access_token = TwitterClient.access_token(consumer_key, consumer_secret)
     JSON.parse(execute(:get, url, access_token))
   end
 
@@ -126,7 +97,6 @@ class TwitterClient
       end
       encoded_params = encode_params(params)
       url = "#{BASE_URL}/statuses/user_timeline.json?#{encoded_params}"
-      access_token = TwitterClient.access_token(consumer_key, consumer_secret)
       t = JSON.parse(execute(:get, url, access_token))
       unless t.empty?
         max_id = t.map{ |tweet| tweet['id'] }.min - 1
@@ -139,10 +109,37 @@ class TwitterClient
   def initialize(ck, cs)
     @consumer_key = ck
     @consumer_secret = cs
+    @access_token = request_access_token(consumer_key, consumer_secret)
+  end
+
+  def bearer_token(ck, cs)
+    ck = URI.encode(ck)
+    cs = URI.encode(cs)
+    Base64.strict_encode64(ck + ':' + cs)
+  end
+
+  def request_access_token(ck, cs)
+    bearer_token = bearer_token(ck, cs)
+    begin
+      resp = RestClient::Request.execute(
+        method: :post,
+        url: 'https://api.twitter.com/oauth2/token',
+        headers: {
+          'User-Agent' => 'My twitter App',
+          'Authorization' => "Basic #{bearer_token}",
+          'Content-Type' => 'application/x-www-form-urlencoded;charset=UTF-8',
+          'Content-Length' => 29,
+          'Accept-Encoding' => 'gzip'
+        },
+        payload: 'grant_type=client_credentials'
+      )
+      JSON.parse(resp)['access_token']
+    rescue => e
+      raise e.http_code == 403 ? AuthenticationError : e
+    end
   end
 
   private
-
   def encode_params(params)
     params.map { |k, v| "#{k}=#{v}" }.join('&')
   end
