@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name          = 'yatc'
-  s.version       = '0.0.1'
-  s.date          = '2015-09-28'
+  s.version       = '0.0.2'
+  s.date          = '2015-09-30'
   s.summary       = 'Yet Another Twitter Client'
   s.description   = 'Twitter client.'
   s.authors       = ['Rafael Rendón Pablo']
