@@ -106,10 +106,11 @@ class TwitterClient
     tweets
   end
 
-  def initialize(ck, cs)
+  def initialize(ck, cs, wait = false)
     @consumer_key = ck
     @consumer_secret = cs
     @access_token = request_access_token(consumer_key, consumer_secret)
+    @should_wait = wait
   end
 
   def bearer_token(ck, cs)
