@@ -41,6 +41,7 @@ class TwitterClient
       data = JSON.parse(execute(:get, url, access_token))
       ids += data['ids']
       cursor = data['next_cursor']
+      break if cursor == 0
     end
     force_retrieval = false
     ids
