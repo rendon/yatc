@@ -13,6 +13,7 @@ class TwitterClient
   attr_accessor :consumer_secret
   attr_accessor :should_wait
   attr_accessor :access_token
+  attr_accessor :force_retrieval
 
   def test_access(ck, cs)
     !request_access_token(ck, cs).empty?
@@ -27,6 +28,7 @@ class TwitterClient
     end
     ids = []
     cursor = nil
+    force_retrieval = true
     while count > 0
       params[:count] = [Yatc::Settings::MAX_FOLLOWER_IDS, count].min
       count -= params[:count]
@@ -40,6 +42,7 @@ class TwitterClient
       ids += data['ids']
       cursor = data['next_cursor']
     end
+    force_retrieval = false
     ids
   end
 
@@ -111,6 +114,7 @@ class TwitterClient
     @consumer_secret = cs
     @access_token = request_access_token(consumer_key, consumer_secret)
     @should_wait = wait
+    @force_retrieval = false
   end
 
   def bearer_token(ck, cs)
@@ -158,10 +162,10 @@ class TwitterClient
         }
       )
     rescue RestClient::TooManyRequests => e
-      headers = e.response.headers
-      if should_wait && headers[:x_rate_limit_reset] && tries == 0
+      limit_reset = e.response.headers[:x_rate_limit_reset]
+      if should_wait && limit_reset && (tries == 0 || force_retrieval)
         tries += 1
-        delta = (Time.at(headers[:x_rate_limit_reset].to_i) - Time.now).to_i
+        delta = (Time.at(limit_reset.to_i) - Time.now).to_i
         sleep(delta + 1)
         retry
       else
