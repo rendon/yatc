@@ -3,10 +3,11 @@ require 'spec_helper'
 RSpec.describe TwitterClient do
   let(:ck) { ENV['TWITTER_CONSUMER_KEY'] }
   let(:cs) { ENV['TWITTER_CONSUMER_SECRET'] }
-  let(:client) { TwitterClient.new(ck, cs)  }
+  let(:credentials) { [{consumer_key: ck, consumer_secret: cs}] }
+  let(:client) { TwitterClient.new(credentials)  }
 
   describe '#test_access' do
-    let(:client) { TwitterClient.new(ck, cs)  }
+    let(:client) { TwitterClient.new(credentials)  }
     it 'should pass' do
       expect { client.test_access(ck, cs) }.not_to raise_error
     end
@@ -19,7 +20,7 @@ RSpec.describe TwitterClient do
   end
 
   describe '#followers_ids' do
-    let(:client) { TwitterClient.new(ck, cs)  }
+    let(:client) { TwitterClient.new(credentials)  }
     let(:count)  { Yatc::Settings::MAX_FOLLOWER_IDS }
     it 'should accept user ID' do
       # TwitterDev has many followers!
@@ -36,7 +37,7 @@ RSpec.describe TwitterClient do
   end
 
   describe '#friends_ids' do
-    let(:client) { TwitterClient.new(ck, cs)  }
+    let(:client) { TwitterClient.new(credentials)  }
     let(:count)  { Yatc::Settings::MAX_FOLLOWER_IDS }
     it 'should accept user ID' do
       expect(client.friends_ids(15514266).length).to eq count
@@ -52,7 +53,7 @@ RSpec.describe TwitterClient do
   end
 
   describe '#users_show' do
-    let(:client) { TwitterClient.new(ck, cs)  }
+    let(:client) { TwitterClient.new(credentials)  }
     it 'should accept user ID' do
       expect(client.users_show(2244994945)['id_str']).to eq '2244994945'
     end
@@ -64,7 +65,7 @@ RSpec.describe TwitterClient do
 
   describe '#statuses_user_timeline' do
     let(:count) { Yatc::Settings::MAX_TWEETS }
-    let(:client) { TwitterClient.new(ck, cs)  }
+    let(:client) { TwitterClient.new(credentials)  }
     it 'should accept user ID' do
       expect(client.statuses_user_timeline(2244994945).length).to eq count
     end

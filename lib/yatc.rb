@@ -14,12 +14,14 @@ class TwitterClient
   attr_accessor :should_wait
   attr_accessor :access_token
   attr_accessor :force_retrieval
+  attr_accessor :credentials
 
   def test_access(ck, cs)
     !request_access_token(ck, cs).empty?
   end
 
   def followers_ids(user, count = 5000)
+    retrieved = 0
     params = {}
     if user.class == Fixnum
       params[:user_id] = user
@@ -38,9 +40,10 @@ class TwitterClient
 
       encoded_params = encode_params(params)
       url = "#{BASE_URL}/followers/ids.json?#{encoded_params}"
-      data = JSON.parse(execute(:get, url, access_token))
+      data = JSON.parse(execute(:get, url))
       ids += data['ids']
       cursor = data['next_cursor']
+      retrieved += params[:count]
       break if cursor == 0
     end
     force_retrieval = false
@@ -65,7 +68,7 @@ class TwitterClient
 
       encoded_params = encode_params(params)
       url = "#{BASE_URL}/friends/ids.json?#{encoded_params}"
-      data = JSON.parse(execute(:get, url, access_token))
+      data = JSON.parse(execute(:get, url))
       ids += data['ids']
       cursor = data['next_cursor']
     end
@@ -81,7 +84,7 @@ class TwitterClient
     end
     params = encode_params(params)
     url = "#{BASE_URL}/users/show.json?#{params}"
-    JSON.parse(execute(:get, url, access_token))
+    JSON.parse(execute(:get, url))
   end
 
   def statuses_user_timeline(user, count = 200)
@@ -101,7 +104,7 @@ class TwitterClient
       end
       encoded_params = encode_params(params)
       url = "#{BASE_URL}/statuses/user_timeline.json?#{encoded_params}"
-      t = JSON.parse(execute(:get, url, access_token))
+      t = JSON.parse(execute(:get, url))
       unless t.empty?
         max_id = t.map{ |tweet| tweet['id'] }.min - 1
       end
@@ -110,12 +113,15 @@ class TwitterClient
     tweets
   end
 
-  def initialize(ck, cs, wait = false)
-    @consumer_key = ck
-    @consumer_secret = cs
-    @access_token = request_access_token(consumer_key, consumer_secret)
+
+  def initialize(credentials, wait = false, force_retrieval = false)
+    raise ArgumentError unless credentials.class == Array
+    raise 'Must provide at least one credential' if credentials.empty?
+    @credentials = credentials
+    @credential_index = 0
+    activate_next_credential
     @should_wait = wait
-    @force_retrieval = false
+    @force_retrieval = force_retrieval
   end
 
   def bearer_token(ck, cs)
@@ -150,7 +156,20 @@ class TwitterClient
     params.map { |k, v| "#{k}=#{v}" }.join('&')
   end
 
-  def execute(method, url, access_token)
+  def activate_next_credential
+    return false if @credential_index >= credentials.length
+    @consumer_key = credentials[@credential_index][:consumer_key]
+    @consumer_secret = credentials[@credential_index][:consumer_secret]
+    @credential_index += 1
+    begin
+      @access_token = request_access_token(consumer_key, consumer_secret)
+    rescue => e
+      return false
+    end
+    true
+  end
+
+  def execute(method, url)
     tries = 0
     begin
       RestClient::Request.execute(
@@ -163,6 +182,10 @@ class TwitterClient
         }
       )
     rescue RestClient::TooManyRequests => e
+      if activate_next_credential
+        retry
+      end
+
       limit_reset = e.response.headers[:x_rate_limit_reset]
       if should_wait && limit_reset && (tries == 0 || force_retrieval)
         tries += 1
