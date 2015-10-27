@@ -31,12 +31,15 @@ class TwitterClient
     ids = []
     cursor = nil
     force_retrieval = true
-    while count > 0
-      params[:count] = [Yatc::Settings::MAX_FOLLOWER_IDS, count].min
-      count -= params[:count]
-      unless cursor.nil?
-        params[:cursor] = cursor
+    loop do
+      if count == -1
+        params[:count] = Yatc::Settings::MAX_FOLLOWER_IDS
+      else
+        params[:count] = [Yatc::Settings::MAX_FOLLOWER_IDS, count].min
+        count -= params[:count]
       end
+
+      params[:cursor] = cursor unless cursor.nil?
 
       encoded_params = encode_params(params)
       url = "#{BASE_URL}/followers/ids.json?#{encoded_params}"
@@ -45,6 +48,7 @@ class TwitterClient
       cursor = data['next_cursor']
       retrieved += params[:count]
       break if cursor == 0
+      break if count == 0
     end
     force_retrieval = false
     ids

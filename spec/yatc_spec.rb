@@ -34,6 +34,11 @@ RSpec.describe TwitterClient do
     it 'should retrieve X number of followers' do
       expect(client.followers_ids('TwitterDev', 7493).length).to eq 7493
     end
+
+    it 'should retrieve all followers' do
+      followers = client.users_show('__rendon__')['followers_count'].to_i
+      expect(client.followers_ids('__rendon__', -1).length).to eq followers
+    end
   end
 
   describe '#friends_ids' do
