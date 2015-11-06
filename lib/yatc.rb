@@ -16,10 +16,6 @@ class TwitterClient
   attr_accessor :force_retrieval
   attr_accessor :credentials
 
-  def test_access(ck, cs)
-    !request_access_token(ck, cs).empty?
-  end
-
   def followers_ids(user, count = 5000)
     retrieved = 0
     params = {}

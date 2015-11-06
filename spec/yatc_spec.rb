@@ -6,19 +6,6 @@ RSpec.describe TwitterClient do
   let(:credentials) { [{consumer_key: ck, consumer_secret: cs}] }
   let(:client) { TwitterClient.new(credentials)  }
 
-  describe '#test_access' do
-    let(:client) { TwitterClient.new(credentials)  }
-    it 'should pass' do
-      expect { client.test_access(ck, cs) }.not_to raise_error
-    end
-
-    it 'should fail' do
-      expect do
-        client.test_access('x' * 25, 'y' * 50)
-      end.to raise_error(AuthenticationError)
-    end
-  end
-
   describe '#followers_ids' do
     let(:client) { TwitterClient.new(credentials)  }
     let(:count)  { Yatc::Settings::MAX_FOLLOWER_IDS }
