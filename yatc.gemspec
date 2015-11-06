@@ -14,5 +14,5 @@ Gem::Specification.new do |s|
   end
   s.require_path  = 'lib'
   s.homepage      = 'https://github.com/rendon/yatc'
-  s.license       = 'GNU GPL v3.0'
+  s.license       = 'LGPL-3.0'
 end
