@@ -28,6 +28,7 @@ class TwitterClient
     cursor = nil
     force_retrieval = true
     loop do
+      STDERR.puts "Followers count: #{count}"
       if count == -1
         params[:count] = Yatc::Settings::MAX_FOLLOWER_IDS
       else
@@ -122,6 +123,8 @@ class TwitterClient
     activate_next_credential
     @should_wait = wait
     @force_retrieval = force_retrieval
+
+    @server_error_retries = 5
   end
 
   def bearer_token(ck, cs)
@@ -157,13 +160,16 @@ class TwitterClient
   end
 
   def activate_next_credential
-    return false if @credential_index >= credentials.length
+    STDERR.puts "Activating next credential..."
+    @credential_index = (@credential_index + 1) % credentials.length
     @consumer_key = credentials[@credential_index][:consumer_key]
     @consumer_secret = credentials[@credential_index][:consumer_secret]
     @credential_index += 1
     begin
       @access_token = request_access_token(consumer_key, consumer_secret)
+      STDERR.puts "New credentials: #{consumer_key} #{consumer_secret}"
     rescue => e
+      STDERR.puts "Failed to activate credentials: #{e.message}"
       return false
     end
     true
@@ -181,7 +187,16 @@ class TwitterClient
           'Accept-Encoding' =>  'gzip'
         }
       )
-    rescue RestClient::TooManyRequests => e
+    rescue => e
+      raise e if e.http_code.class != Fixnum
+      if e.http_code >= 500 && @server_error_retries > 0
+        sleep 60
+        @server_error_retries -= 1
+        retry
+      end
+
+      raise e unless e.http_code == 429
+
       if activate_next_credential
         retry
       end
