@@ -4,6 +4,6 @@ Yet Another Twitter Client
 
 Yatc is a new minimal Twitter API client.
 
-NOTE: This client does not implement the entire Twitter API, even more, it only implements functions for a few endpoints, those that I need in my current project. If you need something more complete use [sferik/twitter](https://github.com/sferik/twitter). You're welcome to contribute or ask for features.
+**NOTE:** This client does not implement the entire Twitter API, even more, it only implements functions for a few endpoints, those that I need in my current project. If you need something more complete use [sferik/twitter](https://github.com/sferik/twitter). You're welcome to contribute or ask for features.
 
 
