@@ -1,3 +1,4 @@
 *.swp
 yatc-*.gem
 tags
+doc/

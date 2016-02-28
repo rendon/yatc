@@ -7,7 +7,6 @@ Gem::Specification.new do |s|
   s.authors       = ['Rafael Rendón Pablo']
   s.email         = 'rafaelrendonpablo@gmail.com'
   s.files         = `git ls-files -- lib/*`.split("\n")
-  
   s.bindir        = 'bin'
   s.executables   = `git ls-files -- bin/*`.split("\n").map do |f|
     File.basename(f)
